@@ -285,8 +285,8 @@ fetch("data.xlsx")
         const content = targetRow[title] || "";
         html += `
             <tr>
-                <td width="115" align="right" class="sl12c">${title}</td>
-                <td width="8" class="sl14c">&nbsp;</td>
+				<td width="115" align="right" valign="top" class="sl12c">${title}</td>
+                <td width="10" class="sl14c">&nbsp;</td>
                 <td width="189" align="left" class="black12">${content}</td>
             </tr>
         `;
