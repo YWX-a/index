@@ -280,7 +280,7 @@ fetch("data.xlsx")
     const targetRow = cleanedData.find(row => String(row.s) === String(paramS)) || {};
 
     // 拼接原版1:1格式的HTML
-    let html = '<table width="280px" border="0" cellspacing="0" cellpadding="0">';
+    let html = '<table width="300px" border="0" cellspacing="0" cellpadding="0">';
     titleList.forEach((title, index) => {
         const content = targetRow[title] || "";
         html += `
