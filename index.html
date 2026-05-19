@@ -1,10 +1,3 @@
-
-
-
-
-
-
-
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
 <html>
 <meta name="viewport" content="width=device-width,minimum-scale=1.0, maximum-scale=2.0" />
@@ -198,6 +191,7 @@ a:active {
 }
 -->
 </STYLE>
+<!-- 内嵌Excel读取库，零依赖 -->
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </HEAD> 
 <BODY topmargin="0">
@@ -225,7 +219,8 @@ a:active {
 		          
 		          <tr>
 		            <td align="center">
-                        <div id="boxHtml"></div>
+                        <!-- 数据将插入到这里，不破坏原有结构 -->
+                        <div id="dataContainer"></div>
                     </td>
 		          </tr>
 		        
@@ -246,9 +241,9 @@ a:active {
     <TD height="10" colspan="3"></TD></TR></TBODY></TABLE></TD></TR></TBODY></TABLE>
 
 <script>
-//左侧标题，和Excel表头一致
-let arrText = [
-    "名称",
+// =========【可修改的标题列表，和Excel表头同步即可】=========
+let titleList = [
+	"名称",
     "统一社会信用代码",
     "宗旨和业务范围",
     "住所",
@@ -259,43 +254,62 @@ let arrText = [
     "有效期",
     "单位状态"
 ];
+// ========================================================
 
-let s = window.location.search.replace("?s=","");
+// 获取URL参数
+let paramS = window.location.search.replace('?s=', '');
 
+// 读取并解析Excel
 fetch("data.xlsx")
-.then(res=>res.arrayBuffer())
-.then(buf=>{
-    let wb = XLSX.read(buf);
-    let json = XLSX.utils.sheet_to_json(wb.Sheets[0]);
-    let newArr = json.map(function(o){
-        let n = {};
-        for(let k in o){ n[k.trim()] = o[k]; }
-        return n;
-    });
-    let data = newArr.find(function(item){
-        return String(item.s) == String(s);
-    }) || {};
+.then(response => response.arrayBuffer())
+.then(buffer => {
+    const workbook = XLSX.read(buffer);
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+    const jsonData = XLSX.utils.sheet_to_json(sheet);
 
-    let html = '<table width="92%" border="0" cellspacing="0" cellpadding="0">';
-
-    for(let i=0;i<arrText.length;i++){
-        let val = data[arrText[i]] || "";
-
-        html += '<tr>';
-        html += '<td width="115" align="right" class="sl12c">'+arrText[i]+'</td>';
-        html += '<td width="15" class="sl14c">&nbsp;</td>';
-        html += '<td width="189" align="left" class="black12">'+val+'</td>';
-        html += '</tr>';
-
-        if(i <= 8){
-            html += '<tr><td align="right"></td><td></td><td align="left" class="xx"></td></tr>';
+    // 清除表头空格，避免匹配失败
+    const cleanedData = jsonData.map(row => {
+        const newRow = {};
+        for (let key in row) {
+            newRow[key.trim()] = row[key];
         }
-    }
+        return newRow;
+    });
 
+    // 匹配对应数据
+    const targetRow = cleanedData.find(row => String(row.s) === String(paramS)) || {};
+
+    // 拼接原版1:1格式的HTML
+    let html = '<table width="92%" border="0" cellspacing="0" cellpadding="0">';
+    titleList.forEach((title, index) => {
+        const content = targetRow[title] || "";
+        html += `
+            <tr>
+                <td width="115" align="right" class="sl12c">${title}</td>
+                <td width="15" class="sl14c">&nbsp;</td>
+                <td width="189" align="left" class="black12">${content}</td>
+            </tr>
+        `;
+        // 1-8 显示虚线，9-10不显示
+        if (index <= 7) {
+            html += `
+                <tr>
+                    <td align="right"></td>
+                    <td></td>
+                    <td align="left" class="xx"></td>
+                </tr>
+            `;
+        }
+    });
     html += '</table>';
 
-    document.getElementById("boxHtml").innerHTML = html;
+    // 插入到页面，不破坏原有结构
+    document.getElementById('dataContainer').innerHTML = html;
 })
+.catch(error => {
+    console.error('加载失败:', error);
+    document.getElementById('dataContainer').innerHTML = '<p style="color:red;">数据加载失败，请检查Excel文件</p >';
+});
 </script>
 
 </BODY></HTML>
