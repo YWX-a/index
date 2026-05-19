@@ -11,112 +11,43 @@
 <head>
 	<title>查询结果</title>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-	<script src="js/xlsx.full.min.js"></script>
-
 <style type="text/css"> 
-body,td,th {
-	font-family: 宋体;
-	font-size: 12px;
-	color: #333333;
-}
-body {
-	margin: 0px;
-}
-/* 左侧标题样式 */
-.sl12c {
-	font-family: "宋体";
-	font-size: 13px;
-	font-weight: bold;
-	color: #046aaf;
-	line-height: 24px;
-}
-/* 右侧内容样式 */
-.black12 {
-	font-family: "宋体";
-	font-size: 13px;
-	font-weight: normal;
-	color: #000000;
-	line-height: 20px;
-}
-/* 虚线分割线样式 */
-.xx {
-	border-bottom-width: 1px;
-	border-bottom-style: dashed;
-	border-bottom-color: #CCCCCC;
-}
+body,td,th {font-family:宋体;font-size:12px;color:#333333;}
+body {margin:0px;}
+.sl12c {font-family:"宋体";font-size:13px;font-weight:bold;color:#046aaf;line-height:24px;}
+.black12 {font-family:"宋体";font-size:13px;font-weight:normal;color:#000000;line-height:20px;}
+.xx {border-bottom:1px dashed #CCCCCC;}
 </style>
 </HEAD> 
 <BODY topmargin="0">
-
 <div id="box"></div>
-
+<!-- 直接引用CDN的xlsx库，无需本地文件 -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script>
-// 【可在这里修改显示名称，Excel表头同步即可】
 let nameList = [
-    "名称",
-    "统一社会信用代码",
-    "宗旨和业务范围",
-    "住所",
-    "法定代表人",
-    "经费来源",
-    "开办资金",
-    "举办单位",
-    "有效期",
-    "单位状态"
+    "名称","统一社会信用代码","宗旨和业务范围","住所","法定代表人",
+    "经费来源","开办资金","举办单位","有效期","单位状态"
 ];
-
-// 获取链接参数
 let num = window.location.search.replace('?s=','');
-
-// 读取并解析Excel
 fetch("data.xlsx")
 .then(res => res.arrayBuffer())
 .then(data => {
     let wb = XLSX.read(data);
     let sheet = wb.Sheets[wb.SheetNames[0]];
     let list = XLSX.utils.sheet_to_json(sheet);
-
-    // 清除表头多余空格，避免匹配失败
     let cleanList = list.map(item => {
         let newItem = {};
-        for(let key in item){
-            newItem[key.trim()] = item[key];
-        }
+        for(let key in item) newItem[key.trim()] = item[key];
         return newItem;
     });
-
-    // 匹配数据（兼容文本/数字格式）
-    let row = cleanList.find(item => String(item.s) === String(num));
-    if(!row) row = {};
-
-    // 生成HTML
+    let row = cleanList.find(item => String(item.s) === String(num)) || {};
     let html = "";
-    for(let i = 0; i < nameList.length; i++){
-        html += `
-        <table width="92%" border="0" cellspacing="0" cellpadding="0">
-          <tr>
-            <td width="115" align="right" class="sl12c">${nameList[i]}</td>
-            <td width="15">&nbsp;</td>
-            <td align="left" class="black12">${row[nameList[i]] || ''}</td>
-          </tr>
-        </table>
-        `;
-        // 仅1-8内容下方显示虚线
-        if(i <= 7){
-            html += `
-            <table width="92%" border="0" cellspacing="0" cellpadding="0">
-              <tr>
-                <td class="xx"></td>
-              </tr>
-            </table>
-            `;
-        }
+    for(let i=0;i<nameList.length;i++){
+        html += `<table width="92%" border="0" cellspacing="0" cellpadding="0"><tr><td width="115" align="right" class="sl12c">${nameList[i]}</td><td width="15">&nbsp;</td><td align="left" class="black12">${row[nameList[i]]||''}</td></tr></table>`;
+        if(i<=7) html += `<table width="92%"><tr><td class="xx"></td></tr></table>`;
     }
-
-    // 渲染页面
     document.getElementById("box").innerHTML = html;
 })
 </script>
-
 </BODY>
 </html>
